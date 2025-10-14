@@ -4,7 +4,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Employee Testing & Selection — Slide Viewer (Verbatim)</title>
+  <title>Employee Testing & Selection — Slides</title>
   <meta name="color-scheme" content="light dark" />
   <link rel="stylesheet" href="style.css" />
 </head>
@@ -20,17 +20,17 @@
         <input id="q" type="search" placeholder="Search words, phrases, sentences, or questions…  (Ctrl/Cmd+K)" />
         <label class="chk"><input id="exact" type="checkbox" /> Exact phrase</label>
         <label class="chk"><input id="case" type="checkbox" /> Case sensitive</label>
-        <span id="resultCount" class="muted small">0 matches</span>
+        <span id="count" class="muted small">0 matches</span>
       </div>
     </div>
   </header>
 
   <main class="wrap">
-    <section class="tips muted small">
+    <section class="tips">
       <p><strong>How to use:</strong> Type in the search bar to filter slides. Results show only slides that contain your query; matches are highlighted. Clear the box to see all slides again.</p>
     </section>
 
-    <section id="slides" class="grid" role="list"></section>
+    <section id="results" class="grid" role="list"></section>
   </main>
 
   <footer class="wrap foot">
