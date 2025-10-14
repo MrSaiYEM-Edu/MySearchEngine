@@ -1,9 +1,10 @@
 // script.js
-// Old-school viewer: embed all slides (verbatim), render them on the page,
-// and provide a search bar that filters + highlights matches.
+// Old-way deck: all slide text is embedded here; page renders immediately and the search filters/highlights.
 
-// ---------------- Verbatim slides extracted from HRM4.pdf ----------------
-const SLIDES = [
+// 1) Embedded verbatim slides (HRM4.pdf)
+//    Source text taken word-for-word from the uploaded PDF. Pages 1–49.
+//    name = PDF file stem ("HRM4"), page = 1-based page number, text = verbatim with \n line breaks.
+const SLIDES_EMBED = [
   {name:"HRM4",page:1,text:`Compiled by Peng Putheara, MBA 1
 Chapter 4
 Employee Testing and 
@@ -339,3 +340,224 @@ May provide useful insights into the candidate’s
 interpersonal competence as they engage in
 group discussion.
 Also saves time for busy professionals and 
+executives.`},
+  {name:"HRM4",page:34,text:`Compiled by Peng Putheara, MBA 34
+Methods of Interviewing (Cont’d) 
+3. Board Interview
+Interviewee’s anxiety level is often quite high
+(Thus, may affect the results).
+4. Stress Interview
+Purpose is to determine the applicant’s tolerance
+for stress.
+Important if the job requires the ability to deal
+with a high level of stress.
+Thus, the stress does not seem to be appropriate
+for the majority of situation.`},
+  {name:"HRM4",page:35,text:`Compiled by Peng Putheara, MBA 35
+Methods of Interviewing (Cont’d) 
+5. Videotaped Interview
+Used to reduce cost (still cover more 
+applicants).
+A structured interview may be used.
+To assure standardized treatment of other 
+similarly conducted interviews, the interviewer 
+may not interact with the candidate but only 
+repeat the question, if necessary.`},
+  {name:"HRM4",page:36,text:`Compiled by Peng Putheara, MBA 36
+Methods of Interviewing (Cont’d) 
+6. Realistic Job Previews
+Both interviewers and applicants exaggerate, 
+resulting to dissatisfaction.
+Employees who had RJP exhibit lower 
+turnover and greater job satisfaction.`},
+  {name:"HRM4",page:37,text:`Compiled by Peng Putheara, MBA 37
+5 Steps in Interview Design
+Job Analysis
+Rate the Job Duties
+Create Interview
+Questions
+Create Benchmark
+Answers
+Appoint Panel & 
+Conduct Interviews`},
+  {name:"HRM4",page:38,text:`Compiled by Peng Putheara, MBA 38
+Personal Reference Checks 
+Most organizations use both the mail and the 
+telephone to check reference. 
+Generally, telephone checks are preferable 
+because they save time and provide for greater 
+candor. 
+The most reliable information usually comes 
+from supervisors, who are in the best position to 
+report on an applicant’s work habits and 
+performance.`},
+  {name:"HRM4",page:39,text:`Compiled by Peng Putheara, MBA 39
+Personal Reference (Cont’d) 
+It is often advisable, however, to obtain 
+written verification of information relating 
+to the job titles, duties, and pay levels 
+from the former employer’s HR office. 
+By using sources in addition to former 
+employers, organizations can obtain 
+valuable information about an applicant’s 
+character and habits.`},
+  {name:"HRM4",page:40,text:`Compiled by Peng Putheara, MBA 40
+Reference Check Form`},
+  {name:"HRM4",page:41,text:`Compiled by Peng Putheara, MBA 41
+Reference Check Form (Cont.)`},
+  {name:"HRM4",page:42,text:`Compiled by Peng Putheara, MBA 42
+Sample of a Reference Check Form
+Applicant Name ............................................................................................
+Company Contacted.....................................Date........................................
+Person Contacted.............................Title.....................................................
+1- Dates of Employment From............................To..............................................
+2- Positions & Duties Held.....................................................................................
+3- Attendance Record Poor Average Good
+4- Reasons for Termination Discharged Resigned 
+5- Job Performance Rating Poor Average Good
+6- Friendliness Distant Approachable Warm
+7- Attitude Uncooperative Cooperative
+8- Knowledge of Field Poor Average Good
+9- Strengths and Weaknesses.............................................................................
+10- Any Additional Information Obtained...........................................................
+Signature of Person Conducting Reference Check.................................`},
+  {name:"HRM4",page:43,text:`Compiled by Peng Putheara, MBA 43
+1. Explain and illustrate the basic ways in which you 
+can classify selection interviews.
+2. Briefly describe each of the following possible types 
+of interviews: unstructured panel interviews; 
+structured sequential interviews; job-related 
+structured interviews.
+3. For what sorts of jobs do you think computerized 
+interviews are most appropriate? Why?`},
+  {name:"HRM4",page:44,text:`Compiled by Peng Putheara, MBA 44
+Physical Examination 
+Many organizations require a medical 
+examination before an employee is hired. 
+To determine whether he or she is physically 
+capable of performing the job.
+But also to determine the applicant’s eligibility 
+for group life, health, and disability insurance. 
+Because of the expense, medical examinations 
+are normally given as one of the last steps in the 
+selection process.`},
+  {name:"HRM4",page:45,text:`Compiled by Peng Putheara, MBA 45
+Physical Examination (Cont’d) 
+The expense of medical examinations has also 
+caused many organizations to have applicants 
+complete a health questionnaire when they fill 
+out their application form. 
+If no serious medical problems are indicated 
+on the medical questionnaire, the applicant is 
+not normally required to have a medical 
+examination.`},
+  {name:"HRM4",page:46,text:`Compiled by Peng Putheara, MBA 46
+Making Selection Decisions 
+A value judgment based on all of the 
+information gathered in the previous steps must 
+be made to select the most qualified individual.
+If the previous steps have been performed 
+properly, the chances of making a successful 
+judgment are improved dramatically.`},
+  {name:"HRM4",page:47,text:`Compiled by Peng Putheara, MBA 47
+Responsibility of Making Selection 
+Decisions 
+It is assigned to different levels of management in 
+different organizations: 
+In some organizations, the HRD handles the 
+completion of application forms, conducts 
+preliminary interviews, testing, and reference 
+checking, and arranges for physical exams.
+But, diagnostic interview and final selection 
+decision usually left to the manager of 
+department.`},
+  {name:"HRM4",page:48,text:`Compiled by Peng Putheara, MBA 48
+Responsibility of Making Selection 
+Decisions (Cont’d) 
+In other organizations, the HRD handles 
+all of the steps up to the final selection 
+decision.
+Under this system, the HRD gives the 
+manager with a job opening a list of three 
+to five qualified applicants.`},
+  {name:"HRM4",page:49,text:`Compiled by Peng Putheara, MBA 49
+Responsibility of Making Selection 
+Decisions (Cont’d)
+The manager then choose the individual 
+that he or she feels will be the best 
+employee based on all the information 
+provided by the HRD.
+Many organizations leave the final choice 
+to the manager with the job opening, 
+subject to the approval of those at higher 
+levels of management.`},
+];
+
+// 2) Use embedded slides by default
+let SLIDES = SLIDES_EMBED.map((s,i)=>({...s,_idx:i}));
+
+// 3) Search + highlight
+const $q = document.getElementById('q');
+const $exact = document.getElementById('exact');
+const $case = document.getElementById('case');
+const $results = document.getElementById('results');
+const $count = document.getElementById('count');
+
+function escapeHtml(s){ return s.replace(/[&<>"']/g, c=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c])); }
+function escapeReg(s){ return s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'); }
+
+function matchText(text, query, opt){
+  if(!query) return true;
+  const src = opt.case? text : text.toLowerCase();
+  const q   = opt.case? query: query.toLowerCase();
+  if(opt.exact) return src.includes(q);
+  const tokens = q.trim().split(/\s+/).filter(Boolean);
+  if(tokens.length===0) return true;
+  return tokens.some(t => src.includes(t)); // OR-match (robust for Khmer + English)
+}
+
+function highlight(text, query, opt){
+  if(!query) return escapeHtml(text);
+  const flags = opt.case? 'g' : 'gi';
+  if(opt.exact){
+    const re = new RegExp(escapeReg(query), flags);
+    return escapeHtml(text).replace(re, m=>`<mark>${escapeHtml(m)}</mark>`);
+  }
+  const tokens = [...new Set(query.trim().split(/\s+/).filter(Boolean))];
+  let html = escapeHtml(text);
+  tokens.forEach(t=>{
+    const re = new RegExp(escapeReg(t), flags);
+    html = html.replace(re, m=>`<mark>${escapeHtml(m)}</mark>`);
+  });
+  return html;
+}
+
+function render(){
+  const query = $q.value.trim();
+  const opt = { exact:$exact.checked, case:$case.checked };
+
+  const hits = SLIDES.filter(s=>matchText(s.text, query, opt))
+                     .sort((a,b)=> (a.page-b.page));
+  $count.textContent = `${hits.length} match${hits.length!==1?'es':''}`;
+
+  $results.innerHTML = hits.map(s=>`
+    <article class="card" role="listitem" tabindex="0">
+      <h3>${s.name} — Slide ${s.page}</h3>
+      <div class="meta">File: ${escapeHtml(s.name)}.pdf • Page: ${s.page}</div>
+      <div class="text">${highlight(s.text, query, opt)}</div>
+    </article>
+  `).join('');
+}
+
+// events
+let deb;
+$q.addEventListener('input', ()=>{ clearTimeout(deb); deb=setTimeout(render, 120); });
+$exact.addEventListener('change', render);
+$case.addEventListener('change', render);
+document.addEventListener('keydown', (e)=>{
+  if((e.ctrlKey||e.metaKey) && e.key.toLowerCase()==='k'){ e.preventDefault(); $q.focus(); $q.select(); }
+  if(e.key==='Escape'){ if($q.value){ $q.value=''; render(); } }
+});
+
+// initial render (show all)
+render();
