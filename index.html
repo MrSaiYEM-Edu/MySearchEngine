@@ -4,10 +4,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Slide Search — Employee Testing & Selection (PDF-based)</title>
+  <title>Slide Search — PDF-based (verbatim) • Auto-load</title>
   <meta name="color-scheme" content="light dark" />
   <link rel="stylesheet" href="style.css" />
-  <!-- pdf.js CDN (official) -->
+  <!-- pdf.js (official CDN) -->
   <script src="https://unpkg.com/pdfjs-dist@4.5.136/build/pdf.min.js"></script>
   <script>
     pdfjsLib.GlobalWorkerOptions.workerSrc = "https://unpkg.com/pdfjs-dist@4.5.136/build/pdf.worker.min.js";
@@ -18,7 +18,7 @@
     <div class="wrap bar-grid">
       <div class="brand">
         <h1>Slide Search</h1>
-        <div class="muted small">PDF-based • Khmer & English • Verbatim only + Exact page view</div>
+        <div class="muted small">PDF-based • Khmer & English • Verbatim only • Auto-load from repo</div>
       </div>
 
       <div class="controls">
@@ -27,14 +27,14 @@
           <span>Upload PDF(s)</span>
         </label>
 
-        <input id="q" type="search" placeholder="Search words, phrases, sentences, or questions…  (Ctrl/Cmd+K)" />
+        <input id="q" type="search" placeholder="Search words, phrases, sentences, or questions… (Ctrl/Cmd+K)" />
 
         <div class="toc">
           <button id="tocBtn" class="btn" type="button">Table of contents ▾</button>
           <div id="tocMenu" class="menu" hidden>
             <div class="menu-head">
               <span>All slides</span>
-              <button id="tocClose" class="icon" title="Close" type="button">×</button>
+              <button id="tocClose" class="icon" type="button" title="Close">×</button>
             </div>
             <div id="tocList" class="menu-list" role="listbox" aria-label="Table of contents"></div>
           </div>
@@ -57,10 +57,10 @@
     </section>
 
     <section id="tips" class="tips">
-      <p><strong>How it works:</strong> This site searches verbatim text extracted from your slides (no AI edits). Click <em>Open exact slide</em> to see the original PDF page. You can also upload or auto-load PDFs via <code>?files=HRM4.pdf</code>.</p>
+      <p><strong>How it works:</strong> The site auto-loads PDFs listed in <code>script.js → MANIFEST</code> and extracts text <em>verbatim</em> (no edits). Use the search bar; click <em>Open exact slide</em> to view the PDF page. You can still Upload extra PDFs ad-hoc.</p>
       <ul>
-        <li>Keyboard: <kbd>Ctrl/Cmd</kbd>+<kbd>K</kbd> focus search • <kbd>Esc</kbd> clear • <kbd>↑/↓</kbd> move.</li>
-        <li>Multiple PDFs supported; results show all matched slides.</li>
+        <li>Keyboard: <kbd>Ctrl/Cmd</kbd>+<kbd>K</kbd> focus • <kbd>Esc</kbd> clear • <kbd>↑/↓</kbd> move.</li>
+        <li>Multiple PDFs supported. TOC lists every slide by file & page.</li>
       </ul>
     </section>
 
@@ -68,7 +68,7 @@
   </main>
 
   <footer class="wrap foot">
-    <small>All text shown is extracted verbatim from the PDF(s). Exact view renders the original PDF page with pdf.js.</small>
+    <small>All text is extracted verbatim from PDFs in this repo. Exact view renders the original page via pdf.js.</small>
   </footer>
 
   <!-- Exact page modal -->
@@ -78,16 +78,13 @@
       <div class="modal-head">
         <div id="modalTitle" class="modal-title">Exact page</div>
         <div class="modal-tools">
-          <button id="zoomOut" class="icon" title="Zoom out" type="button">−</button>
-          <button id="zoomIn" class="icon" title="Zoom in" type="button">+</button>
-          <button id="modalClose" class="icon" title="Close" type="button">×</button>
+          <button id="zoomOut" class="icon" type="button" title="Zoom out">−</button>
+          <button id="zoomIn" class="icon"  type="button" title="Zoom in">+</button>
+          <button id="modalClose" class="icon" type="button" title="Close">×</button>
         </div>
       </div>
       <div class="modal-content">
         <canvas id="pageCanvas"></canvas>
-      </div>
-      <div class="wrap small muted" style="padding:8px 12px 14px">
-        Tip: to use exact view without uploading, place the PDF(s) in this repo and open with <code>?files=HRM4.pdf</code>.
       </div>
     </div>
   </div>
