@@ -1,5 +1,5 @@
-// script.js
-// PDF-based search (verbatim). Supports multiple PDFs, Khmer/English. No generated content.
+// script.js — PDF-based search (verbatim). Khmer/English. No generated content.
+// Enhancements: drag-drop, ?files= auto-load, better progress/errors.
 
 const $file = document.getElementById('file');
 const $q = document.getElementById('q');
@@ -10,29 +10,31 @@ const $fileCount = document.getElementById('fileCount');
 const $slideCount = document.getElementById('slideCount');
 const $resultCount = document.getElementById('resultCount');
 const $tips = document.getElementById('tips');
-
-// TOC dropdown
 const $tocBtn = document.getElementById('tocBtn');
 const $tocMenu = document.getElementById('tocMenu');
 const $tocClose = document.getElementById('tocClose');
 const $tocList = document.getElementById('tocList');
 
-// Data model: [{docId, name, page, text}]
-let SLIDES = [];
-let DOCS = []; // [{id, name, pages}]
+let SLIDES = [];         // [{docId, name, page, text}]
+let DOCS = [];           // [{id, name, pages}]
+let loading = false;
 
-// --- PDF loading helpers ---
-async function loadPDF(file, id) {
-  const arrayBuffer = await file.arrayBuffer();
+function setStatus(msg) {
+  $results.innerHTML = `<p class="muted">${msg}</p>`;
+}
+function setError(msg) {
+  $results.innerHTML = `<p class="muted" style="color:#d33">${msg}</p>`;
+}
+
+async function loadPDFfromArrayBuffer(arrayBuffer, name, id) {
   const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
   const pages = pdf.numPages;
-  const name = file.name.replace(/\.pdf$/i, '');
   DOCS.push({ id, name, pages });
 
   for (let p = 1; p <= pages; p++) {
     const page = await pdf.getPage(p);
     const content = await page.getTextContent();
-    // Join text items, preserve rough line breaks
+    // group items into lines by y position (approx)
     const lines = [];
     let lastY = null;
     let buf = [];
@@ -40,7 +42,6 @@ async function loadPDF(file, id) {
       const str = item.str || '';
       const y = Math.round(item.transform[5]);
       if (lastY !== null && Math.abs(y - lastY) > 6) {
-        // new line
         lines.push(buf.join(' '));
         buf = [];
       }
@@ -48,9 +49,22 @@ async function loadPDF(file, id) {
       lastY = y;
     }
     if (buf.length) lines.push(buf.join(' '));
-    const text = lines.join('\n');
-    SLIDES.push({ docId: id, name, page: p, text });
+    SLIDES.push({ docId: id, name, page: p, text: lines.join('\n') });
   }
+}
+
+async function loadLocalFile(file, id) {
+  const buf = await file.arrayBuffer();
+  const name = file.name.replace(/\.pdf$/i, '');
+  await loadPDFfromArrayBuffer(buf, name, id);
+}
+
+async function loadRemoteFile(url, id) {
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`HTTP ${res.status} for ${url}`);
+  const buf = await res.arrayBuffer();
+  const name = url.split('/').pop().replace(/\.pdf$/i,'') || `doc${id}`;
+  await loadPDFfromArrayBuffer(buf, name, id);
 }
 
 function updateCounts() {
@@ -59,7 +73,6 @@ function updateCounts() {
 }
 
 function renderTOC() {
-  // group by doc
   const groups = new Map();
   SLIDES.forEach(s => {
     if (!groups.has(s.docId)) groups.set(s.docId, []);
@@ -92,11 +105,9 @@ function highlight(text, query, opt) {
     const re = new RegExp(escapeReg(query), flags);
     return escapeHtml(text).replace(re, m => `<mark>${escapeHtml(m)}</mark>`);
   }
-  // ANY of the terms; Khmer-friendly: split by whitespace; if none, do substring
   const words = query.trim().split(/\s+/).filter(Boolean);
   if (words.length === 0) return escapeHtml(text);
   let html = escapeHtml(text);
-  // Deduplicate small function-words? Keep simple: highlight all tokens
   [...new Set(words)].forEach(w => {
     const re = new RegExp(escapeReg(w), flags);
     html = html.replace(re, m => `<mark>${escapeHtml(m)}</mark>`);
@@ -111,8 +122,7 @@ function matchSlide(text, query, opt) {
   if (opt.exact) return src.includes(q);
   const tokens = q.trim().split(/\s+/).filter(Boolean);
   if (tokens.length === 0) return true;
-  // Match if any token occurs (broad recall for Khmer + English)
-  return tokens.some(tok => src.includes(tok));
+  return tokens.some(tok => src.includes(tok)); // ANY token
 }
 
 function renderResults() {
@@ -140,25 +150,54 @@ function renderResults() {
   }).join('') || `<p class="muted">No matches yet. Upload PDF(s) and search any words, phrases, or questions.</p>`;
 }
 
-// --- Event wiring ---
+// --- Wire up events ---
 $file.addEventListener('change', async (e) => {
   const files = [...e.target.files].filter(f => f.type === 'application/pdf');
   if (!files.length) return;
 
-  // Reset state when new files are chosen (optional: comment out to append)
+  loading = true;
+  setStatus('Loading PDF(s)…');
+  // Reset state on each selection (comment next 3 lines to append instead)
   SLIDES = [];
   DOCS = [];
-  $results.innerHTML = `<p class="muted">Loading PDFs…</p>`;
 
   let idSeq = 0;
   for (const f of files) {
     const id = `doc${++idSeq}`;
     try {
-      await loadPDF(f, id);
+      await loadLocalFile(f, id);
     } catch (err) {
       console.error('PDF load failed:', f.name, err);
+      setError(`Failed to read "${f.name}". (${err.message})`);
     }
   }
+  loading = false;
+  updateCounts();
+  renderTOC();
+  renderResults();
+});
+
+// drag & drop
+['dragenter','dragover'].forEach(evt =>
+  document.addEventListener(evt, e => { e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; })
+);
+document.addEventListener('drop', async (e) => {
+  e.preventDefault();
+  const files = [...(e.dataTransfer?.files || [])].filter(f => f.type === 'application/pdf');
+  if (!files.length) return;
+  loading = true;
+  setStatus('Loading PDF(s)…');
+
+  SLIDES = [];
+  DOCS = [];
+
+  let idSeq = 0;
+  for (const f of files) {
+    const id = `doc${++idSeq}`;
+    try { await loadLocalFile(f, id); }
+    catch (err) { console.error('PDF load failed:', f.name, err); setError(`Failed to read "${f.name}". (${err.message})`); }
+  }
+  loading = false;
   updateCounts();
   renderTOC();
   renderResults();
@@ -166,10 +205,7 @@ $file.addEventListener('change', async (e) => {
 
 // search input
 let t;
-$q.addEventListener('input', () => {
-  clearTimeout(t);
-  t = setTimeout(renderResults, 120);
-});
+$q.addEventListener('input', () => { clearTimeout(t); t = setTimeout(renderResults, 120); });
 $exact.addEventListener('change', renderResults);
 $case.addEventListener('change', renderResults);
 
@@ -197,9 +233,7 @@ $results.addEventListener('click', (e)=>{
 $tocBtn.addEventListener('click', ()=> toggleTOC(true) );
 $tocClose.addEventListener('click', ()=> toggleTOC(false) );
 document.addEventListener('click', (e)=>{
-  if (!$tocMenu.contains(e.target) && !$tocBtn.contains(e.target)) {
-    toggleTOC(false);
-  }
+  if (!$tocMenu.contains(e.target) && !$tocBtn.contains(e.target)) toggleTOC(false);
 });
 $tocList.addEventListener('click', (e)=>{
   const link = e.target.closest('a[data-jump]');
@@ -207,20 +241,29 @@ $tocList.addEventListener('click', (e)=>{
   const [docId, pageStr] = link.dataset.jump.split(':');
   const card = document.querySelector(`article[data-doc="${docId}"][data-page="${pageStr}"]`);
   toggleTOC(false);
-  if (card) {
-    card.scrollIntoView({behavior:'smooth', block:'start'});
-    card.focus();
-  } else {
-    // If not rendered (e.g., filtered by search), clear search and render all
-    $q.value = '';
-    renderResults();
-    setTimeout(()=>{
-      const again = document.querySelector(`article[data-doc="${docId}"][data-page="${pageStr}"]`);
-      again?.scrollIntoView({behavior:'smooth', block:'start'});
-      again?.focus();
+  if (card) { card.scrollIntoView({behavior:'smooth', block:'start'}); card.focus(); }
+  else { $q.value=''; renderResults(); setTimeout(()=> {
+      document.querySelector(`article[data-doc="${docId}"][data-page="${pageStr}"]`)?.scrollIntoView({behavior:'smooth', block:'start'});
     }, 50);
   }
 });
 
-// initial state
+// auto-load PDFs from URL, e.g. ?files=HRM4.pdf,Course2.pdf
+(async function autoLoadFromURL(){
+  const params = new URLSearchParams(location.search);
+  const list = (params.get('files') || '').split(',').map(s=>s.trim()).filter(Boolean);
+  if (!list.length) return;
+  loading = true; setStatus('Loading PDF(s)…');
+  SLIDES = []; DOCS = [];
+  let idSeq = 0;
+  for (const path of list) {
+    const id = `doc${++idSeq}`;
+    try { await loadRemoteFile(path, id); }
+    catch (err) { console.error('Fetch failed:', path, err); setError(`Failed to fetch "${path}". (${err.message})`); }
+  }
+  loading = false;
+  updateCounts(); renderTOC(); renderResults();
+})();
+
+// initial render
 renderResults();
