@@ -1,0 +1,77 @@
+<!-- index.html -->
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Slide Search — PDF-based (Khmer & English)</title>
+  <meta name="color-scheme" content="light dark" />
+  <link rel="stylesheet" href="style.css" />
+  <!-- pdf.js (official) -->
+  <script src="https://unpkg.com/pdfjs-dist@4.5.136/build/pdf.min.js"></script>
+  <script>
+    // point worker to CDN (required by pdf.js)
+    pdfjsLib.GlobalWorkerOptions.workerSrc = "https://unpkg.com/pdfjs-dist@4.5.136/build/pdf.worker.min.js";
+  </script>
+</head>
+<body>
+  <header class="bar">
+    <div class="wrap bar-grid">
+      <div class="brand">
+        <h1>Slide Search</h1>
+        <div class="muted small">PDF-based • Khmer & English • Verbatim only</div>
+      </div>
+
+      <div class="controls">
+        <label class="file">
+          <input id="file" type="file" accept="application/pdf" multiple />
+          <span>Upload PDF(s)</span>
+        </label>
+
+        <input id="q" type="search" placeholder="Search words, phrases, sentences, or questions…  (Ctrl/Cmd+K)" />
+
+        <!-- Content table dropdown on the right -->
+        <div class="toc">
+          <button id="tocBtn" class="btn">Table of contents ▾</button>
+          <div id="tocMenu" class="menu" hidden>
+            <div class="menu-head">
+              <span>All slides</span>
+              <button id="tocClose" class="icon" title="Close">×</button>
+            </div>
+            <div id="tocList" class="menu-list" role="listbox" aria-label="Table of contents"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <section class="panel">
+      <div class="row">
+        <div class="muted small">Loaded PDFs: <span id="fileCount">0</span> • Slides: <span id="slideCount">0</span></div>
+        <div class="row-right">
+          <label class="chk"><input id="exact" type="checkbox" /> Exact phrase</label>
+          <label class="chk"><input id="case" type="checkbox" /> Case sensitive</label>
+          <span id="resultCount" class="muted small">0 results</span>
+        </div>
+      </div>
+    </section>
+
+    <section id="tips" class="tips">
+      <p><strong>How it works:</strong> Upload your PDF slides. We extract text <em>exactly</em> as-is (no AI edits). Use the search bar to find words, phrases, sentences, or questions. The dropdown on the right lists all slides by PDF and page.</p>
+      <ul>
+        <li>Keyboard: <kbd>Ctrl/Cmd</kbd>+<kbd>K</kbd> to focus search, <kbd>Esc</kbd> to clear, <kbd>↑/↓</kbd> to navigate cards.</li>
+        <li>Multiple PDFs supported. Content is searchable across all uploaded files.</li>
+      </ul>
+    </section>
+
+    <section id="results" class="grid" role="list"></section>
+  </main>
+
+  <footer class="wrap foot">
+    <small>All content shown here is extracted verbatim from your uploaded PDF files. No generated text is added.</small>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
