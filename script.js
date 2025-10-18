@@ -1,6 +1,5 @@
-// script.js
-// Build slides (sections) for all pages in HRM1–HRM5 (verbatim), with search + chapter nav.
-// Also includes an "Export data" to download data.js with SLIDES_EMBED for permanent embedding.
+// script.js (instrumented)
+// Loads HRM1–HRM5, extracts pages verbatim in order, builds slides, adds counters + logs.
 
 document.addEventListener('DOMContentLoaded', () => {
   const PDF_LIST = [
@@ -11,19 +10,27 @@ document.addEventListener('DOMContentLoaded', () => {
     { file:'HRM5.pdf', id:'ch5', title:'Chapter 5' },
   ];
 
-  const deck = document.getElementById('deck');
-  const chapNav = document.getElementById('chapNav');
-  const $q = document.getElementById('q');
-  const $exact = document.getElementById('exact');
-  const $case = document.getElementById('case');
-  const $count = document.getElementById('count');
-  const $export = document.getElementById('exportBtn');
+  const deck     = document.getElementById('deck');
+  const chapNav  = document.getElementById('chapNav');
+  const $q       = document.getElementById('q');
+  const $exact   = document.getElementById('exact');
+  const $case    = document.getElementById('case');
+  const $count   = document.getElementById('count');
+  const $export  = document.getElementById('exportBtn');
+
+  // Small counter UI in the header (right side of the search tools)
+  const counters = document.createElement('span');
+  counters.className = 'muted small';
+  counters.style.marginLeft = '8px';
+  counters.id = 'loadCounters';
+  document.querySelector('.bar-tools')?.appendChild(counters);
+
   const year = document.getElementById('year');
   if (year) year.textContent = new Date().getFullYear();
 
-  // Search helpers
   const escapeHtml = s => s.replace(/[&<>"']/g, c=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
-  const escReg = s => s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+  const escReg     = s => s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+
   const match = (txt, q, opt) => {
     if (!q) return true;
     const src = opt.case ? txt : txt.toLowerCase();
@@ -49,23 +56,24 @@ document.addEventListener('DOMContentLoaded', () => {
     return html;
   };
 
-  // Extraction
   async function loadPdf(url){ return await pdfjsLib.getDocument({ url }).promise; }
 
   async function extractVerbatim(pdf) {
     const pages = pdf.numPages;
-    const slides = [];
+    const out = [];
     for (let p=1;p<=pages;p++){
       const page = await pdf.getPage(p);
       const tc = await page.getTextContent();
-      // Sort Y desc, X asc
+
+      // sort by Y desc, X asc
       const items = tc.items.slice().sort((a,b)=>{
         const ay = Math.round(a.transform[5]), by = Math.round(b.transform[5]);
         if (ay !== by) return by - ay;
         const ax = Math.round(a.transform[4]), bx = Math.round(b.transform[4]);
         return ax - bx;
       });
-      // Line building with hasEOL + Y-gap; space for Latin only
+
+      // build lines (hasEOL + Y-gap; add spaces for Latin only)
       const lines=[]; let line='', lastY=null, lastX=null;
       for (const it of items){
         const s = it.str ?? '';
@@ -76,41 +84,32 @@ document.addEventListener('DOMContentLoaded', () => {
         if (it.hasEOL){ lines.push(line.trimEnd()); line=''; lastX=null; lastY=y; } else { lastX=x; lastY=y; }
       }
       if (line) lines.push(line.trimEnd());
-      slides.push(lines.join('\n'));
+      out.push(lines.join('\n'));
     }
-    return slides; // array of page texts
+    return out;
   }
 
-  // Build slides in DOM
-  function renderSlides(chap, chapTitle, arr) {
-    // Chapter anchor
-    const chapAnchor = document.createElement('a');
-    chapAnchor.href = `#${chap}-1`;
-    chapAnchor.textContent = chapTitle;
-    chapNav.appendChild(chapAnchor);
-
-    arr.forEach((text, i) => {
-      const sec = document.createElement('section');
-      sec.id = `${chap}-${i+1}`;
-      sec.dataset.chap = chap;
-      sec.dataset.page = String(i+1);
-      sec.innerHTML = `
-        <div class="kicker">${chapTitle} — Slide ${i+1}</div>
-        <h2 class="slide-title">${chapTitle}</h2>
-        <div class="pagebox">
-          <div class="text">${escapeHtml(text)}</div>
-        </div>
-      `;
-      deck.appendChild(sec);
-    });
+  function section(chap, chapTitle, page, text) {
+    const sec = document.createElement('section');
+    sec.id = `${chap}-${page}`;
+    sec.dataset.chap = chap;
+    sec.dataset.page = String(page);
+    sec.innerHTML = `
+      <div class="kicker">${chapTitle} — Slide ${page}</div>
+      <h2 class="slide-title">${chapTitle}</h2>
+      <div class="pagebox"><div class="text">${escapeHtml(text)}</div></div>
+    `;
+    return sec;
   }
 
-  // Search/filter
+  // search
   function runSearch(){
     const q = $q.value.trim();
     const opt = { exact:$exact.checked, case:$case.checked };
+    const secs = [...deck.querySelectorAll('section')];
+
     let visible = 0;
-    deck.querySelectorAll('section').forEach(sec => {
+    secs.forEach(sec => {
       const raw = sec.querySelector('.text').textContent || '';
       const show = match(raw, q, opt);
       sec.style.display = show ? '' : 'none';
@@ -122,7 +121,6 @@ document.addEventListener('DOMContentLoaded', () => {
     $count.textContent = `${visible} match${visible!==1?'es':''}`;
   }
 
-  // Scroll spy by chapter
   function initSpy(){
     const chapLinks = [...chapNav.querySelectorAll('a')];
     const sections  = [...deck.querySelectorAll('section')];
@@ -138,7 +136,6 @@ document.addEventListener('DOMContentLoaded', () => {
     sections.forEach(s => io.observe(s));
   }
 
-  // Prev/Next buttons
   function initControls(){
     const controls = document.createElement('div');
     controls.className = 'slide-controls';
@@ -167,22 +164,19 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Export embedded data
-  function exportData(slidesByChapter){
-    const entries = [];
-    slidesByChapter.forEach(({chap, title, pages})=>{
-      pages.forEach((text, idx)=>{
-        entries.push(`  { name:${JSON.stringify(title)}, page:${idx+1}, text:${JSON.stringify(text)} }`);
-      });
-    });
-    const blob = new Blob(
-      [
-        `// data.js — exported from your PDFs (verbatim)\n`,
-        `const SLIDES_EMBED = [\n${entries.join(',\n')}\n];\n`,
-        `export default SLIDES_EMBED;\n`
-      ],
-      {type:'text/javascript'}
-    );
+  // export as data.js for “baked” version
+  function exportData() {
+    const secs = [...deck.querySelectorAll('section')];
+    const entries = secs.map(sec => {
+      const name = sec.querySelector('.kicker').textContent.replace(/ — Slide \d+$/,'');
+      const page = Number(sec.dataset.page||'1');
+      const text = sec.querySelector('.text').textContent || '';
+      return `  { name:${JSON.stringify(name)}, page:${page}, text:${JSON.stringify(text)} }`;
+    }).join(',\n');
+    const blob = new Blob([
+      `// data.js — exported slides (verbatim)\n`,
+      `const SLIDES_EMBED = [\n${entries}\n];\nexport default SLIDES_EMBED;\n`
+    ], {type:'text/javascript'});
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
     a.download = 'data.js';
@@ -190,58 +184,55 @@ document.addEventListener('DOMContentLoaded', () => {
     URL.revokeObjectURL(a.href);
   }
 
-  // ---- Load all chapters (from URL ?files= or default list) ----
+  // Init
   (async function init(){
-    // Focus shortcut
-    document.addEventListener('keydown', (e)=> {
-      if ((e.ctrlKey||e.metaKey) && e.key.toLowerCase()==='k'){ e.preventDefault(); $q.focus(); $q.select(); }
-      if (e.key==='Escape'){ if ($q.value) { $q.value=''; runSearch(); } }
-    });
-
     deck.innerHTML = `<section style="min-height:40vh;align-content:center">
-      <div class="pagebox"><div class="text muted">Loading chapters…</div></div>
+      <div class="pagebox"><div class="text muted">Loading HRM1–HRM5…</div></div>
     </section>`;
 
-    // Allow URL override: ?files=a.pdf,b.pdf,c.pdf…
+    // Allow URL ?files= override
     const paramFiles = (new URLSearchParams(location.search).get('files')||'')
       .split(',').map(s=>s.trim()).filter(Boolean);
     const list = paramFiles.length
       ? paramFiles.map((f,i)=>({ file:f, id:`ch${i+1}`, title:`Chapter ${i+1}` }))
       : PDF_LIST;
 
-    deck.innerHTML = ''; // clear loader
+    deck.innerHTML = '';
+    let totalSlides = 0, loadedChaps = 0;
 
-    const collected = []; // for export
+    // Build chapter nav (links jump to first page of each chapter)
+    chapNav.innerHTML = list.map(ch => `<a href="#${ch.id}-1">${ch.title}</a>`).join('');
+
+    // Load in given order (1 → 5)
     for (const ch of list){
       try{
         const pdf = await loadPdf(ch.file);
         const slides = await extractVerbatim(pdf);
-        renderSlides(ch.id, ch.title, slides);
-        collected.push({ chap: ch.id, title: ch.title, pages: slides });
+        console.log(`[${ch.title}] loaded: ${slides.length} pages`);
+        slides.forEach((text, idx) => deck.appendChild(section(ch.id, ch.title, idx+1, text)));
+        totalSlides += slides.length; loadedChaps++;
       }catch(err){
-        // write an error slide so order remains clear
-        const sec = document.createElement('section');
-        sec.innerHTML = `
-          <div class="kicker">${ch.title}</div>
-          <h2 class="slide-title">${ch.title}</h2>
-          <div class="pagebox"><div class="text">Failed to load ${ch.file}: ${err.message}</div></div>`;
-        deck.appendChild(sec);
+        console.warn(`Failed to load ${ch.file}:`, err);
+        deck.appendChild(section(ch.id, ch.title, 1, `⚠️ Could not load ${ch.file} — check filename, path, or case sensitivity.`));
       }
     }
 
-    // Build chapter nav & spy
-    chapNav.innerHTML = list.map(ch => `<a href="#${ch.id}-1">${ch.title}</a>`).join('');
-    initSpy();
+    // Counters in header
+    document.getElementById('loadCounters').textContent =
+      `Chapters: ${loadedChaps}/${list.length} • Slides: ${totalSlides}`;
+
+    // Activate features
     runSearch();
+    initSpy();
     initControls();
 
-    // Bind search
+    // Hook search
     let t;
-    $q.addEventListener('input', ()=>{ clearTimeout(t); t=setTimeout(runSearch, 120); });
+    $q.addEventListener('input', ()=>{ clearTimeout(t); t=setTimeout(runSearch,120); });
     $exact.addEventListener('change', runSearch);
     $case.addEventListener('change', runSearch);
 
-    // Export
-    $export.addEventListener('click', ()=> exportData(collected));
+    // Export button
+    $export.addEventListener('click', exportData);
   })();
 });
